@@ -1,19 +1,29 @@
-import groovy.io.FileType
-import groovy.io.FileVisitResult
-
-//
+////
 // Automatically increase the version of an image in a project
-//
+////
 // release : The release branch to target for the SUPERSET project
 // image   : The image to target in the SUPERSET project
 // version : The new version to uprev to in the SUPERSET project
-///
+////
 // Notes
 //   If SUPERSET project is not present, it is cloned
 //   If version supplied equals the current version in the SUPERSET project, nothing is done
 //   If release branch doesn't exist, nothing is done
 //   Script assumes all images are part of a larger group: e.g. 'main-project/image:version'
+////
+import groovy.io.FileType
+import groovy.io.FileVisitResult
+
+
 def autoVersion(release, image, version){
+  def projectParentDir=".."
+  def projectDirName="auto-version-target"
+  def projectGitURL="https://github.com/WilliamTheMarsman/auto-version-target.git"
+  
+  return autoVersion(projectParentDir,projectDirName,projectGitURL,release,image,version)
+}
+
+def autoVersion(projectParentDir,projectDirName,projectGitURL,projectGitURL,release,image,version){
 
   ///
   // May want to get location we should check out git projects to from an environment variable; HC for now
@@ -22,10 +32,7 @@ def autoVersion(release, image, version){
   // def projectParentDir = env['PROJECT_PARENT_DIR'] 
   ///
 
-  def projectParentDir=".."
-  def projectDirName="auto-version-target"
   def projectDir="${projectParentDir}/auto-version-target"
-  def projectGitURL="https://github.com/WilliamTheMarsman/auto-version-target.git"
 
   // So far this will check out the project
   def clone = ["git", "-C", "..", "clone", projectGitURL, projectDir].execute()
@@ -109,5 +116,5 @@ def autoVersion(release, image, version){
   println "Pushed changes to ${release}"
 }
 
-
+// To allow importing in Jenkins, return this
 return this
