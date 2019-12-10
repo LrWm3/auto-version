@@ -64,20 +64,26 @@ The job can now be run by using 'build with parameters'
 
 #### Required Signature Approvals
 
-Add the following to `<JENKINS_HOST>/script-approval`, under `Signatures Already Approved`
+Add the following to `<JENKINS_HOST>/script-approval`, under `Signatures Already Approved`. Note some of these are not safe to expose if you do not trust the Jenkins jobs being run on your Jenkins node.
 
 ```
+method groovy.lang.GroovyObject invokeMethod java.lang.String java.lang.Object
 method java.io.File getName
 method java.io.File getPath
+method java.io.File lastModified
 method java.lang.Process exitValue
 method java.lang.Process waitFor
 new groovy.util.AntBuilder
 new java.io.File java.lang.String
+new java.lang.StringBuilder
 staticField groovy.io.FileType FILES
+staticField groovy.io.FileVisitResult SKIP_SUBTREE
 staticMethod org.codehaus.groovy.runtime.DefaultGroovyMethods execute java.util.List
 staticMethod org.codehaus.groovy.runtime.DefaultGroovyMethods getText java.io.File
+staticMethod org.codehaus.groovy.runtime.DefaultGroovyMethods println groovy.lang.Closure java.lang.Object
 staticMethod org.codehaus.groovy.runtime.DefaultGroovyMethods size java.util.regex.Matcher
 staticMethod org.codehaus.groovy.runtime.DefaultGroovyMethods traverse java.io.File java.util.Map groovy.lang.Closure
+staticMethod org.codehaus.groovy.runtime.ProcessGroovyMethods consumeProcessOutput java.lang.Process java.lang.Appendable java.lang.Appendable
 ```
 
 #### Jenkins Parameter Descriptions

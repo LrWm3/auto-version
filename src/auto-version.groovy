@@ -64,9 +64,14 @@ def autoVersion(projectParentDir,projectDirName,projectGitURL,release,image,vers
   // See if the branch exists remotely
   // see: https://git-scm.com/docs/ls-remote
   def branchExists = ["git", "-C", projectDir, "ls-remote", "--heads", "--exit-code", "origin", release].execute()
+  def sout = new StringBuilder(), serr = new StringBuilder()
+  branchExists.consumeProcessOutput(sout, serr)
+
   branchExists.waitFor()
   if (branchExists.exitValue()) {
     println "Branch " + release + " does not exist, so group project requires no updates!"
+    println "sout: $sout"
+    println "serr: $serr"
     return OK_STATUS;
   }
   println "... found target release branch '${release}' ..."
