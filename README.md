@@ -48,16 +48,17 @@ For usage with Jenkins, see below.
 
 The main reason to use this script is to use it with CI engine. An example set-up is described below
 
-1. Add permissions to `<JENKINS_HOST>/script-approval`, under `Signatures Already Approved`
-2. Create a pipeline jenkins job called 'uprev-version'
-3. Check 'Do not allow concurrent builds'
-4. Check 'This project is parameterized'
-5. Add String parameter RELEASE_BRANCH with description from below
-6. Add String parameter IMAGE_NAME with description from below
-7. Add String parameter IMAGE_VERSION with description from below
-8. Select 'Pipeline script'
-9. Copy and paste the pipeline script found in this [Jenkinsfile](./example/jenkins-int/Jenkinsfile)
-10. In the script pasted, `lines 35-37`, change the target project name, project directory and git repo URL to the project you would like to update.
+1. ssh into the Jenkins host and do a `git login` with the credentials the script will use. `git config --global credential.helper store` && `git clone <PROJECT_URL>`, then log-in.
+2. Add permissions to `<JENKINS_HOST>/script-approval`, under `Signatures Already Approved`
+3. Create a pipeline jenkins job called 'uprev-version'
+4. Check 'Do not allow concurrent builds'
+5. Check 'This project is parameterized'
+6. Add String parameter RELEASE_BRANCH with description from below
+7. Add String parameter IMAGE_NAME with description from below
+8. Add String parameter IMAGE_VERSION with description from below
+9. Select 'Pipeline script'
+10. Copy and paste the pipeline script found in this [Jenkinsfile](./example/jenkins-int/Jenkinsfile)
+11. In the script pasted, `lines 35-37`, change the target project name, project directory and git repo URL to the project you would like to update.
 
 The job can now be run by using 'build with parameters'
 
@@ -81,7 +82,7 @@ stage ('Run Uprev job') {
 
 This job might take a few minutes to run the first time, when it is pulling the target repository. However, afterwards, the repository is cached on Jenkins and this script should only take `5-10` seconds to run per image.
 
-Now, whenever a subproject is built on either the 'release-*', or 'master' it will automatically update on the releases available in our target project.
+Now, whenever a subproject is built on either the 'release-\*', or 'master' it will automatically update on the releases available in our target project.
 
 #### Jenkins Required Signature Approvals
 
