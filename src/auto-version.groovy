@@ -42,7 +42,7 @@ def autoVersion(release, image, version){
   def pullLatest = ["git", "-C", projectDir, "pull"].execute()
   pullLatest.waitFor()
 
-  def list = []
+  def files = []
   def root = new File(projectDir)
   def imageVersions = new File(root.path + "/release/src.images")
   def regexp = /${image}:(.+)/
@@ -67,12 +67,12 @@ def autoVersion(release, image, version){
           excludeNameFilter   : { it in excludedDirs }, // excludes the excluded dirs as well
           // nameFilter          : { it == 'settings.gradle'} // matched only given names
   ) {
-    list << it
+    files << it
   }
 
   // For each file, replace the value of the image version
   def ant = new AntBuilder()
-  list.each {
+  files.each {
     println it.path
 
     // Replace the image everywhere
@@ -82,13 +82,17 @@ def autoVersion(release, image, version){
   println "Moved ${image} to '${version}' from '${oldVersion}'"
 
   // Commit the change 
-  ["git", "-C", projectDir, "add", "."].execute()
-  ["git", "-C", projectDir, "commit", "-m", "${release}: [ROBO] ${image} to '${version}' from '${oldVersion}'"].execute()
+  def gitAdd = ["git", "-C", projectDir, "add", "."].execute()
+  gitAdd.waitFor();
+
+  def gitCommit = ["git", "-C", projectDir, "commit", "-m", "${release}: [ROBO] ${image} to '${version}' from '${oldVersion}'"].execute()
+  gitCommit.waitFor();
 
   println "Committed changes to ${release}"
 
   // Push to remote
-  ["git", "-C", projectDir, "push", "origin", release].execute()
+  def gitPush = ["git", "-C", projectDir, "push", "origin", release].execute()
+  gitPush.waitFor();
 
   println "Pushed changes to ${release}"
 }
