@@ -40,6 +40,6 @@ groovy src/auto-version.spec.groovy
 ## Notes
 
 1. Currently, the GIT_PROJECT, PROJECT_PARENT_DIRECTORY, and GIT_PROJECT_URL variables are all hardcoded; change as required for individual needs
-1. If converted into a jenkins job, the stage this is run must have a [Pipeline Lock](https://jenkins.io/blog/2016/10/16/stage-lock-milestone/#lock) to avoid multiple jobs performing pushes at once. This shouldn't slow down build-times much, since the target project is meant to be shared among all jobs, and jobs do not hold the lock long if no action is taken.
+1. If converted into a jenkins job, the stage this is run must have a [Lockable Resource](https://wiki.jenkins.io/plugins/servlet/mobile?contentId=70878639#content/view/70878639) to avoid multiple jobs performing pushes at once. This shouldn't slow down build-times much, since the target project is meant to be shared among all jobs, and jobs do not hold the lock long if no action is taken.
 1. release branch must already exist, or no action will be taken to uprev versions of images provided. create the release branch manually.
 1. As a jenkins job, the branch name being built for the INDIVIDUAL project is supplied as the 'release' value provided to the `auto-version` function.
