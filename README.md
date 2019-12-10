@@ -16,6 +16,7 @@ Automatically version [auto-version-target](https://github.com/WilliamTheMarsman
 //   If SUPERSET project is not present, it is cloned
 //   If version supplied equals the current version in the SUPERSET project, nothing is done
 //   If release branch doesn't exist, nothing is done
+//   Script assumes all images are part of a larger group: e.g. 'main-project/image:version'
 def autoVersion(release, image, version){
   // boring impl details
 }
@@ -33,6 +34,7 @@ See `auto-version.spec.groovy` for an example of this script being called.
 cd auto-version
 groovy src/auto-version.spec.groovy
 ```
+
 > `auto-version.groovy` can be run from anywhere.
 
 ## Notes

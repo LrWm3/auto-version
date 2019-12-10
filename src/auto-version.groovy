@@ -4,6 +4,15 @@ import groovy.io.FileVisitResult
 //
 // Automatically increase the version of an image in a project
 //
+// release : The release branch to target for the SUPERSET project
+// image   : The image to target in the SUPERSET project
+// version : The new version to uprev to in the SUPERSET project
+///
+// Notes
+//   If SUPERSET project is not present, it is cloned
+//   If version supplied equals the current version in the SUPERSET project, nothing is done
+//   If release branch doesn't exist, nothing is done
+//   Script assumes all images are part of a larger group: e.g. 'main-project/image:version'
 def autoVersion(release, image, version){
 
   ///
@@ -45,7 +54,9 @@ def autoVersion(release, image, version){
   def files = []
   def root = new File(projectDir)
   def imageVersions = new File(root.path + "/release/src.images")
-  def regexp = /${image}:(.+)/
+
+  // Assume all images are part of a larger group 'main-project/image:version'
+  def regexp = /[\/]${image}:(.+)/
   def oldVersion = (imageVersions.text =~ regexp)[0][1]
 
   if (version == oldVersion) {
@@ -76,7 +87,7 @@ def autoVersion(release, image, version){
     println it.path
 
     // Replace the image everywhere
-    ant.replaceregexp(file: it.path, match: "${image}:.+", replace: "${image}:${version}")
+    ant.replaceregexp(file: it.path, match: "[/]${image}:.+", replace: "/${image}:${version}")
   }
 
   println "Moved ${image} to '${version}' from '${oldVersion}'"
