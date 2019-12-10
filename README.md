@@ -61,7 +61,29 @@ The main reason to use this script is to use it with CI engine. An example set-u
 
 The job can now be run by using 'build with parameters'
 
-#### Required Signature Approvals
+#### Fully automate with Jenkins by calling this job from other jobs
+
+In order to automatically increase the version on child-project merge to master or a releas branch, ensure that when the child pipeline is run, it makes a call out to the Jenkins job created above with appropriate parameters. See below for details, depeneding on the kind of job which was made.
+
+1. For non-pipeline jobs, the [Parameterized Trigger Plugin](https://wiki.jenkins.io/display/JENKINS/Parameterized+Trigger+Plugin) can be used. Supply as parameters the 'BRANCH_NAME' being built, the 'IMAGE_NAME' (no version or path), and 'IMAGE_VERSION" to the job.
+2. For pipeline jobs, it can be done with the following Jenkins job stage, see this [Stackoverflow post](https://stackoverflow.com/a/39656390) for more details
+
+```Groovy
+stage ('Run Uprev job') {
+    // No reason to run wait
+    build job: 'RunArtInTest', wait: false, parameters: [
+        [$class: 'StringParameterValue', name: 'RELEASE_BRANCH', value: RELEASE_BRANCH]
+        [$class: 'StringParameterValue', name: 'IMAGE_VERSION', value: IMAGE_VERSION]
+        [$class: 'StringParameterValue', name: 'IMAGE_NAME', value: IMAGE_NAME]
+      ]
+}
+```
+
+This job might take a few minutes to run the first time, when it is pulling the target repository. However, afterwards, the repository is cached on Jenkins and this script should only take `5-10` seconds to run per image.
+
+Now, whenever a subproject is built on either the 'release-*', or 'master' it will automatically update on the releases available in our target project.
+
+#### Jenkins Required Signature Approvals
 
 Add the following to `<JENKINS_HOST>/script-approval`, under `Signatures Already Approved`. Note some of these are not safe to expose if you do not trust the Jenkins jobs being run on your Jenkins node.
 
@@ -85,9 +107,9 @@ staticMethod org.codehaus.groovy.runtime.DefaultGroovyMethods traverse java.io.F
 staticMethod org.codehaus.groovy.runtime.ProcessGroovyMethods consumeProcessOutput java.lang.Process java.lang.Appendable java.lang.Appendable
 ```
 
-#### Jenkins Parameter Descriptions
+#### Jenkins auto-version Job Parameter Descriptions
 
-Parameter descriptions for Jenkins, if you are interested in that kind of thing.
+Parameter descriptions for Jenkins, these can be copied into the descriptions of the parameters in the Jenkins job configuration to make it clearer how they are used.
 
 ```
 # RELEASE_BRANCH
@@ -104,23 +126,3 @@ This does not currently work for images which are not part of an image group. ex
 ##
 The version the image is tagged with. ex: "0.1.0-rc1"
 ```
-
-#### Calling from other jobs
-
-Next, call this Jenkins job from another job, supplying the parameters from the other job.
-
-1. For non-pipeline jobs, the [Parameterized Trigger Plugin](https://wiki.jenkins.io/display/JENKINS/Parameterized+Trigger+Plugin) can be used. Supply as parameters the 'BRANCH_NAME' being built, the 'IMAGE_NAME' (no version or path), and 'IMAGE_VERSION" to the job.
-2. For pipeline jobs, it can be done rather simply, see this [Stackoverflow post](https://stackoverflow.com/a/39656390) for more details
-
-```Groovy
-stage ('Run Uprev job') {
-    // No reason to run wait
-    build job: 'RunArtInTest', wait: false, parameters: [
-        [$class: 'StringParameterValue', name: 'RELEASE_BRANCH', value: RELEASE_BRANCH]
-        [$class: 'StringParameterValue', name: 'IMAGE_VERSION', value: IMAGE_VERSION]
-        [$class: 'StringParameterValue', name: 'IMAGE_NAME', value: IMAGE_NAME]
-      ]
-}
-```
-
-This job might take a few minutes to run the first time, when it is pulling the target repository. However, afterwards, the repository is cached on Jenkins and this script should only take `5-10` seconds to run per image.
