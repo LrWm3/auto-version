@@ -107,6 +107,14 @@ def autoVersion(projectParentDir,projectDirName,projectGitURL,release,image,vers
   checkout.waitFor()
   println "... checking out release branch '${release}' ..."
 
+  // Clean the branch
+  def checkoutReset = ["git", "-C", projectDir, "checkout", "--", "."].execute()
+  checkoutReset.waitFor()
+
+  def checkoutReset = ["git", "-C", projectDir, "clean", "-xfd", "."].execute()
+  checkoutReset.waitFor()
+  println "... checking out release branch '${release}' ..."
+
   // Pull the latest for branch
   def pullLatest = ["git", "-C", projectDir, "pull"].execute()
   pullLatest.waitFor()
