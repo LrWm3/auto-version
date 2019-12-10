@@ -6,13 +6,14 @@ Automatically version [auto-version-target](https://github.com/WilliamTheMarsman
 
 See `auto-version.spec.groovy` for an example of this script being called.
 
-> Must be run from project root. See below.
+> `auto-version.spec.groovy` must be run from project root. See below.
 
 ```bash
 # Must be called from root directory of this project
 cd auto-version
 groovy src/auto-version.spec.groovy
 ```
+> `auto-version.groovy` can be run from anywhere.
 
 ## Notes
 
