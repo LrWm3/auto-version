@@ -31,6 +31,7 @@ node {
 }
 
 // Wrapper around main function, contains HC values
+@NonCPS
 def autoVersion(release, image, version){
   def projectParentDir="/var/jenkins_home/workspace-shared"
   def projectDirName="auto-version-target"
@@ -39,6 +40,7 @@ def autoVersion(release, image, version){
   return autoVersion(projectParentDir,projectDirName,projectGitURL,release,image,version)
 }
 
+@NonCPS
 def autoVersion(projectParentDir,projectDirName,projectGitURL,release,image,version){
 
   /// Constants
