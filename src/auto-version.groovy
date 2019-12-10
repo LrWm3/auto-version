@@ -25,22 +25,41 @@ def autoVersion(release, image, version){
 
 def autoVersion(projectParentDir,projectDirName,projectGitURL,release,image,version){
 
-  ///
-  // May want to get location we should check out git projects to from an environment variable; HC for now
-  ///
-  // def env = System.getenv()
-  // def projectParentDir = env['PROJECT_PARENT_DIR'] 
-  ///
+  /// Constants
+  def OK_STATUS=0
+  def WARNING_STATUS=67
+  def ERROR_STATUS=1
+  def TARGET_FILE_WITH_IMAGE_VERSION="/release/src.images"
+  def THICK_DELIM="==============================================================================="
+  def THIN_DELIM="-------------------------------------------------------------------------------"
 
   def projectDir="${projectParentDir}/${projectDirName}"
+
+  println THICK_DELIM
+  println "Auto-Version paramters"
+  println THICK_DELIM
+  println "projectParentDir : ${projectParentDir}"
+  println "projectDirName   : ${projectDirName}"
+  println "projectDir       : ${projectDir}"
+  println "projectGitURL    : ${projectGitURL}"
+  println "release          : ${release}"
+  println "image            : ${image}"
+  println "version (new)    : ${version}"
+  println THIN_DELIM
+
+  println "Performing git operations to get a reference to the target project..."
+  println THIN_DELIM
 
   // So far this will check out the project
   def clone = ["git", "-C", "..", "clone", projectGitURL, projectDir].execute()
   clone.waitFor();
+  println "... cloned '${projectGitURL}' to '${projectDir}' ..."
+  
 
   // Fetch all branches
   def fetch = ["git", "-C", projectDir, "fetch", release].execute()
   fetch.waitFor();
+  println "... fetching all branches for '${projectDirName}' ..."
 
   // See if the branch exists remotely
   // see: https://git-scm.com/docs/ls-remote
@@ -49,38 +68,68 @@ def autoVersion(projectParentDir,projectDirName,projectGitURL,release,image,vers
   if (branchExists.exitValue()) {
     println "Branch " + release + " does not exist, so group project requires no updates!"
   }
+  println "... found target release branch '${release}' ..."
 
   // Checkout the branch
   def checkout = ["git", "-C", projectDir, "checkout", release].execute()
   checkout.waitFor()
+  println "... checking out release branch '${release}' ..."
 
   // Pull the latest for branch
   def pullLatest = ["git", "-C", projectDir, "pull"].execute()
   pullLatest.waitFor()
+  println "... pulling latest from release branch '${release}' ..."
 
-  def files = []
-  def root = new File(projectDir)
-  def imageVersions = new File(root.path + "/release/src.images")
+  def projectRootPath = new File(projectDir)
+  def imageVersions = new File(projectRootPath.path + TARGET_FILE_WITH_IMAGE_VERSION)
 
   // Assume all images are part of a larger group 'main-project/image:version'
   def regexp = /[\/]${image}:(.+)/
+  def regexpResult = (imageVersions.text =~ regexp);
+
+  // No image matching what was provided was found. This is probably not ok.
+  if (regexpResult.size()==0){
+    println "The image '$image' was not found in $TARGET_FILE_WITH_IMAGE_VERSION, it will be necessary to add it manually if the intent is to put it in this release."
+    
+    // Return WARNING flag?
+    return WARNING_STATUS;
+  }
+
+  if (regexpResult.size()>1){
+    println "The image '$image' was found $regexpResult.size() times in '$TARGET_FILE_WITH_IMAGE_VERSION', instead of only once, please check and see if this is an error!"
+
+    println "Contents of $TARGET_FILE_WITH_IMAGE_VERSION"
+    println THIN_DELIM
+    println imageVersions.text
+    println THIN_DELIM
+
+    // Return WARNING flag?
+    return TARGET_FILE_WITH_IMAGE_VERSION;
+  }
+
+  // We've made it through above, which means we have exactly one match to our regexp
   def oldVersion = (imageVersions.text =~ regexp)[0][1]
 
+
+  // Print out the provided values. We don't have the old version before this point.
+  println THIN_DELIM
+  println "Done set-up git operations!"
+  println THICK_DELIM
+  println "Performing uprevision activities..."
+  println THIN_DELIM
+  println "... found old version '${oldVersion}' for '${image}' in '${TARGET_FILE_WITH_IMAGE_VERSION}' ..."
+
+  // See if the version has changed
   if (version == oldVersion) {
     println "Thankfully, no need to update the version for ${image} as we are already at version ${version} on ${release}"
     return 0;
   }
 
-  println "release       :${release}"
-  println "image         :${image}"
-  println "version (new) :${version}"
-  println "version (old) :${oldVersion}"
-
   final excludedDirs = ['.svn', '.git', '.idea', 'node_modules', 'build']
 
   // Get all files for now
-  println "Incrementing version in the following files..."
-  root.traverse(
+  def files = []
+  projectRootPath.traverse(
           type                : FileType.FILES,
           preDir              : { if (it.name in excludedDirs) return FileVisitResult.SKIP_SUBTREE }, // excludes children of excluded dirs
           excludeNameFilter   : { it in excludedDirs }, // excludes the excluded dirs as well
@@ -91,30 +140,51 @@ def autoVersion(projectParentDir,projectDirName,projectGitURL,release,image,vers
 
   // For each file, replace the value of the image version
   def ant = new AntBuilder()
+
+  println "... incrementing version in the following files ..."
+  filesModified=0
   files.each {
-    println it.path
 
     // Replace the image everywhere
-    ant.replaceregexp(file: it.path, match: "[/]${image}:.+", replace: "/${image}:${version}")
+    // Get modified times from file to see if the file has changed
+    def lastModifiedPrevious=it.lastModified()
+    def fileRegexp = ant.replaceregexp(file: it.path, match: "[/]${image}:.+", replace: "/${image}:${version}").toString()
+
+    def lastModifiedNew=it.lastModified()
+
+    // If last modified has changed, print the path
+    if (lastModifiedPrevious!=lastModifiedNew){
+      println "... > '${it.path}'"
+      ++filesModified
+    }
   }
 
-  println "Moved ${image} to '${version}' from '${oldVersion}'"
+  println THIN_DELIM
+  println "Done moving ${image} to '${version}'! (from '${oldVersion}')"
+  println THICK_DELIM
+  println "Committing changes and pushing them to the remote project..."
+  println THIN_DELIM
 
   // Commit the change 
   def gitAdd = ["git", "-C", projectDir, "add", "."].execute()
   gitAdd.waitFor();
+  println "... added changes to local repository on '${release}' branch ... "
 
   gitAdd.waitFor();
   def gitCommit = ["git", "-C", projectDir, "commit", "-m", "📦 '${image}:${version}' (from '${oldVersion}')"].execute()
   gitCommit.waitFor();
-
-  println "Committed changes to ${release}"
+  println "... committed changes to local repository on '${release}' branch ... "
 
   // Push to remote
   def gitPush = ["git", "-C", projectDir, "push", "origin", release].execute()
   gitPush.waitFor();
+  println "... pushed changes to remote repository on '${release}' branch ... "
 
-  println "Pushed changes to ${release}"
+  println THIN_DELIM
+  println "Done pushing changes to the remote repository for '${release}'!"
+  println THICK_DELIM
+  println "Done auto-versioning"
+  println THICK_DELIM
 }
 
 // To allow importing in Jenkins, return this

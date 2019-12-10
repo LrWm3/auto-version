@@ -18,6 +18,12 @@ def version="0.1.0-rc4"
 // Call the parameterized method
 autoVersion.autoVersion(release,image,version);
 
+// Try with an image which does not exist
+def imageNotExist="i-dont-exist"
+
+// Call the parameterized method
+autoVersion.autoVersion(release,imageNotExist,version);
+
 // Release, file and version we're updating for
 // Hardcoded as an example here
 version="0.1.0-rc5"
