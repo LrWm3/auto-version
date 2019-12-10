@@ -4,6 +4,15 @@ import groovy.io.FileVisitResult
 //
 // Automatically increase the version of an image in a project
 //
+// release : The release branch to target for the SUPERSET project
+// image   : The image to target in the SUPERSET project
+// version : The new version to uprev to in the SUPERSET project
+///
+// Notes
+//   If SUPERSET project is not present, it is cloned
+//   If version supplied equals the current version in the SUPERSET project, nothing is done
+//   If release branch doesn't exist, nothing is done
+//   Script assumes all images are part of a larger group: e.g. 'main-project/image:version'
 def autoVersion(release, image, version){
 
   ///
@@ -22,13 +31,13 @@ def autoVersion(release, image, version){
   def clone = ["git", "-C", "..", "clone", projectGitURL, projectDir].execute()
   clone.waitFor();
 
-  // Fetch all branches, in case there's a new one
+  // Fetch all branches
   def fetch = ["git", "-C", projectDir, "fetch", release].execute()
   fetch.waitFor();
 
-  // See if the branch exists, now that we've pulled
-  // see: https://git-scm.com/docs/git-rev-parse
-  def branchExists = ["git", "-C", projectDir, "rev-parse", "--verify", release].execute()
+  // See if the branch exists remotely
+  // see: https://git-scm.com/docs/ls-remote
+  def branchExists = ["git", "-C", projectDir, "ls-remote", "--heads", "--exit-code", "origin", release].execute()
   branchExists.waitFor()
   if (branchExists.exitValue()) {
     println "Branch " + release + " does not exist, so group project requires no updates!"
@@ -42,10 +51,12 @@ def autoVersion(release, image, version){
   def pullLatest = ["git", "-C", projectDir, "pull"].execute()
   pullLatest.waitFor()
 
-  def list = []
+  def files = []
   def root = new File(projectDir)
   def imageVersions = new File(root.path + "/release/src.images")
-  def regexp = /${image}:(.+)/
+
+  // Assume all images are part of a larger group 'main-project/image:version'
+  def regexp = /[\/]${image}:(.+)/
   def oldVersion = (imageVersions.text =~ regexp)[0][1]
 
   if (version == oldVersion) {
@@ -58,8 +69,7 @@ def autoVersion(release, image, version){
   println "version (new) :${version}"
   println "version (old) :${oldVersion}"
 
-  final excludedDirs = ['.svn', '.git', '.hg', '.idea', 'node_modules', '.gradle', 'build']
-  int count = 0
+  final excludedDirs = ['.svn', '.git', '.idea', 'node_modules', 'build']
 
   // Get all files for now
   root.traverse(
@@ -68,28 +78,32 @@ def autoVersion(release, image, version){
           excludeNameFilter   : { it in excludedDirs }, // excludes the excluded dirs as well
           // nameFilter          : { it == 'settings.gradle'} // matched only given names
   ) {
-    list << it
+    files << it
   }
 
   // For each file, replace the value of the image version
   def ant = new AntBuilder()
-  list.each {
+  files.each {
     println it.path
 
     // Replace the image everywhere
-    ant.replaceregexp(file: it.path, match: "${image}:.+", replace: "${image}:${version}")
+    ant.replaceregexp(file: it.path, match: "[/]${image}:.+", replace: "/${image}:${version}")
   }
 
   println "Moved ${image} to '${version}' from '${oldVersion}'"
 
   // Commit the change 
-  ["git", "-C", projectDir, "add", "."].execute()
-  ["git", "-C", projectDir, "commit", "-m", "${release}: [ROBO] ${image} to '${version}' from '${oldVersion}'"].execute()
+  def gitAdd = ["git", "-C", projectDir, "add", "."].execute()
+  gitAdd.waitFor();
+
+  def gitCommit = ["git", "-C", projectDir, "commit", "-m", "${release}: [ROBO] ${image} to '${version}' from '${oldVersion}'"].execute()
+  gitCommit.waitFor();
 
   println "Committed changes to ${release}"
 
   // Push to remote
-  ["git", "-C", projectDir, "push", "origin", release].execute()
+  def gitPush = ["git", "-C", projectDir, "push", "origin", release].execute()
+  gitPush.waitFor();
 
   println "Pushed changes to ${release}"
 }

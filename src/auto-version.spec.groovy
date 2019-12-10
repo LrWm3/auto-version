@@ -14,3 +14,17 @@ def version="0.1.0-rc4"
 
 // Call the parameterized method
 autoVersion.autoVersion(release,image,version);
+
+// Release, file and version we're updating for
+// Hardcoded as an example here
+version="0.1.0-rc5"
+
+// Call the parameterized method
+autoVersion.autoVersion(release,image,version);
+
+// Release, file and version we're updating for
+// Hardcoded as an example here
+version="0.1.0-rc4"
+
+// Call the parameterized method
+autoVersion.autoVersion(release,image,version);
