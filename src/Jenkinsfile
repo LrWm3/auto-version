@@ -1,22 +1,38 @@
 ////
-// Automatically increase the version of an image in a project
+// See 'autoVersion' for impl details
 ////
-// release : The release branch to target for the SUPERSET project
-// image   : The image to target in the SUPERSET project
-// version : The new version to uprev to in the SUPERSET project
+
 ////
-// Notes
-//   If SUPERSET project is not present, it is cloned
-//   If version supplied equals the current version in the SUPERSET project, nothing is done
-//   If release branch doesn't exist, nothing is done
-//   Script assumes all images are part of a larger group: e.g. 'main-project/image:version'
+// required permissions
 ////
+// add below to 'Signatures already approved' on page 'http://localhost:8080/scriptApproval/'
+/*----------------------------------------------------------------------------------------------------------------------
+method java.io.File getPath
+method java.lang.Process exitValue
+method java.lang.Process waitFor
+new groovy.util.AntBuilder
+new java.io.File java.lang.String
+staticField groovy.io.FileType FILES
+staticMethod org.codehaus.groovy.runtime.DefaultGroovyMethods execute java.util.List
+staticMethod org.codehaus.groovy.runtime.DefaultGroovyMethods getText java.io.File
+staticMethod org.codehaus.groovy.runtime.DefaultGroovyMethods size java.util.regex.Matcher
+staticMethod org.codehaus.groovy.runtime.DefaultGroovyMethods traverse java.io.File java.util.Map groovy.lang.Closure
+----------------------------------------------------------------------------------------------------------------------*/
+
+// Imports
 import groovy.io.FileType
 import groovy.io.FileVisitResult
 
+// Pipeline is one line which calls the function below
+node {
+  stage('Auto-Release') {
+    autoVersion(RELEASE_BRANCH, IMAGE_NAME, IMAGE_VERSION)
+  }
+}
 
+// Wrapper around main function, contains HC values
 def autoVersion(release, image, version){
-  def projectParentDir=".."
+  def projectParentDir="/var/jenkins_home/workspace-shared"
   def projectDirName="auto-version-target"
   def projectGitURL="https://github.com/WilliamTheMarsman/auto-version-target.git"
   
@@ -187,6 +203,3 @@ def autoVersion(projectParentDir,projectDirName,projectGitURL,release,image,vers
   println "Done auto-versioning"
   println THICK_DELIM
 }
-
-// To allow importing in Jenkins, return this
-return this
