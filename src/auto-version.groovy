@@ -96,7 +96,8 @@ def autoVersion(release, image, version){
   def gitAdd = ["git", "-C", projectDir, "add", "."].execute()
   gitAdd.waitFor();
 
-  def gitCommit = ["git", "-C", projectDir, "commit", "-m", "${release}: [ROBO] ${image} to '${version}' from '${oldVersion}'"].execute()
+  gitAdd.waitFor();
+  def gitCommit = ["git", "-C", projectDir, "commit", "-m", "📦 '${image}:${version}' (from '${oldVersion}')"].execute()
   gitCommit.waitFor();
 
   println "Committed changes to ${release}"
