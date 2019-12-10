@@ -58,8 +58,7 @@ def autoVersion(release, image, version){
   println "version (new) :${version}"
   println "version (old) :${oldVersion}"
 
-  final excludedDirs = ['.svn', '.git', '.hg', '.idea', 'node_modules', '.gradle', 'build']
-  int count = 0
+  final excludedDirs = ['.svn', '.git', '.idea', 'node_modules', 'build']
 
   // Get all files for now
   root.traverse(
