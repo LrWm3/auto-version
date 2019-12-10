@@ -23,7 +23,7 @@ def autoVersion(release, image, version){
   return autoVersion(projectParentDir,projectDirName,projectGitURL,release,image,version)
 }
 
-def autoVersion(projectParentDir,projectDirName,projectGitURL,projectGitURL,release,image,version){
+def autoVersion(projectParentDir,projectDirName,projectGitURL,release,image,version){
 
   ///
   // May want to get location we should check out git projects to from an environment variable; HC for now
@@ -32,7 +32,7 @@ def autoVersion(projectParentDir,projectDirName,projectGitURL,projectGitURL,rele
   // def projectParentDir = env['PROJECT_PARENT_DIR'] 
   ///
 
-  def projectDir="${projectParentDir}/auto-version-target"
+  def projectDir="${projectParentDir}/${projectDirName}"
 
   // So far this will check out the project
   def clone = ["git", "-C", "..", "clone", projectGitURL, projectDir].execute()
@@ -79,6 +79,7 @@ def autoVersion(projectParentDir,projectDirName,projectGitURL,projectGitURL,rele
   final excludedDirs = ['.svn', '.git', '.idea', 'node_modules', 'build']
 
   // Get all files for now
+  println "Incrementing version in the following files..."
   root.traverse(
           type                : FileType.FILES,
           preDir              : { if (it.name in excludedDirs) return FileVisitResult.SKIP_SUBTREE }, // excludes children of excluded dirs
