@@ -22,13 +22,13 @@ def autoVersion(release, image, version){
   def clone = ["git", "-C", "..", "clone", projectGitURL, projectDir].execute()
   clone.waitFor();
 
-  // Fetch all branches, in case there's a new one
+  // Fetch all branches
   def fetch = ["git", "-C", projectDir, "fetch", release].execute()
   fetch.waitFor();
 
-  // See if the branch exists, now that we've fetched
-  // see: https://git-scm.com/docs/git-rev-parse
-  def branchExists = ["git", "-C", projectDir, "rev-parse", "--verify", release].execute()
+  // See if the branch exists remotely
+  // see: https://git-scm.com/docs/ls-remote
+  def branchExists = ["git", "-C", projectDir, "ls-remote", "--heads", "--exit-code", "origin", release].execute()
   branchExists.waitFor()
   if (branchExists.exitValue()) {
     println "Branch " + release + " does not exist, so group project requires no updates!"
