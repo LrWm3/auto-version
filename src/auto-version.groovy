@@ -26,7 +26,7 @@ def autoVersion(release, image, version){
   def fetch = ["git", "-C", projectDir, "fetch", release].execute()
   fetch.waitFor();
 
-  // See if the branch exists, now that we've pulled
+  // See if the branch exists, now that we've fetched
   // see: https://git-scm.com/docs/git-rev-parse
   def branchExists = ["git", "-C", projectDir, "rev-parse", "--verify", release].execute()
   branchExists.waitFor()
