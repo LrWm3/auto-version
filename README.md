@@ -2,7 +2,7 @@
 
 Automatically version [auto-version-target](https://github.com/WilliamTheMarsman/auto-version-target) when an image version is updated.
 
-## Usage
+## Interface
 
 ```groovy
 //
@@ -21,6 +21,8 @@ def autoVersion(release, image, version){
 }
 
 ```
+
+## Usage
 
 See `auto-version.spec.groovy` for an example of this script being called.
 
