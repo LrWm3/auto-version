@@ -11,7 +11,7 @@ See `auto-version.spec.groovy` for an example of this script being called.
 ```bash
 # Must be called from root directory of this project
 cd auto-version
-groovy src/auto-version.groovy
+groovy src/auto-version.spec.groovy
 ```
 
 ## Notes
