@@ -20,7 +20,6 @@ As an example, we can see many commits performed by this job in the [Github Netw
 //   If SUPERSET project is not present, it is cloned
 //   If version supplied equals the current version in the SUPERSET project, nothing is done
 //   If release branch doesn't exist, nothing is done
-//   Script assumes all images are part of a larger group: e.g. 'main-project/image:version'
 def autoVersion(release, image, version){
   // boring impl details
 }
