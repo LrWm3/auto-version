@@ -105,20 +105,20 @@ def autoVersion(projectParentDir,projectDirName,projectGitURL,release,image,vers
   // Checkout the branch
   def checkout = ["git", "-C", projectDir, "checkout", release].execute()
   checkout.waitFor()
-  println "... checking out release branch '${release}' ..."
+  println "... checked out release branch '${release}' ..."
 
   // Clean the branch
   def checkoutReset = ["git", "-C", projectDir, "checkout", "--", "."].execute()
   checkoutReset.waitFor()
 
-  def checkoutReset = ["git", "-C", projectDir, "clean", "-xfd", "."].execute()
-  checkoutReset.waitFor()
-  println "... checking out release branch '${release}' ..."
+  def gitClean = ["git", "-C", projectDir, "clean", "-xfd", "."].execute()
+  gitClean.waitFor()
+  println "... cleaned branch '${release}' ..."
 
   // Pull the latest for branch
   def pullLatest = ["git", "-C", projectDir, "pull"].execute()
   pullLatest.waitFor()
-  println "... pulling latest from release branch '${release}' ..."
+  println "... pulled latest from release branch '${release}' ..."
 
   def projectRootPath = new File(projectDir)
   def imageVersions = new File(projectRootPath.path + TARGET_FILE_WITH_IMAGE_VERSION)
