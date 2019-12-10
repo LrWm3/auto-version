@@ -108,3 +108,6 @@ def autoVersion(release, image, version){
 
   println "Pushed changes to ${release}"
 }
+
+
+return this
