@@ -49,17 +49,36 @@ For usage with Jenkins, see below.
 
 The main reason to use this script is to use it with CI engine. An example set-up is described below
 
-1. Create a pipeline jenkins job called 'uprev-version'
-1. Check 'Do not allow concurrent builds'
-1. Check 'This project is parameterized'
-1. Add String parameter RELEASE_BRANCH with description from below
-1. Add String parameter IMAGE_NAME with description from below
-1. Add String parameter IMAGE_VERSION with description from below
-1. Select 'Pipeline script'
-1. Copy and paste the pipeline script found in this [Jenkinsfile](./example/jenkins-int/Jenkinsfile)
-1. In the script pasted, `lines 35-37`, change the target project name, project directory and git repo URL to the project you would like to update.
+1. Add permissions to `<JENKINS_HOST>/script-approval`, under `Signatures Already Approved`
+2. Create a pipeline jenkins job called 'uprev-version'
+3. Check 'Do not allow concurrent builds'
+4. Check 'This project is parameterized'
+5. Add String parameter RELEASE_BRANCH with description from below
+6. Add String parameter IMAGE_NAME with description from below
+7. Add String parameter IMAGE_VERSION with description from below
+8. Select 'Pipeline script'
+9. Copy and paste the pipeline script found in this [Jenkinsfile](./example/jenkins-int/Jenkinsfile)
+10. In the script pasted, `lines 35-37`, change the target project name, project directory and git repo URL to the project you would like to update.
 
 The job can now be run by using 'build with parameters'
+
+#### Required Signature Approvals
+
+Add the following to `<JENKINS_HOST>/script-approval`, under `Signatures Already Approved`
+
+```
+method java.io.File getName
+method java.io.File getPath
+method java.lang.Process exitValue
+method java.lang.Process waitFor
+new groovy.util.AntBuilder
+new java.io.File java.lang.String
+staticField groovy.io.FileType FILES
+staticMethod org.codehaus.groovy.runtime.DefaultGroovyMethods execute java.util.List
+staticMethod org.codehaus.groovy.runtime.DefaultGroovyMethods getText java.io.File
+staticMethod org.codehaus.groovy.runtime.DefaultGroovyMethods size java.util.regex.Matcher
+staticMethod org.codehaus.groovy.runtime.DefaultGroovyMethods traverse java.io.File java.util.Map groovy.lang.Closure
+```
 
 #### Jenkins Parameter Descriptions
 
