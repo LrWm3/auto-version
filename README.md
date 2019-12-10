@@ -1,6 +1,6 @@
 # auto-version
 
-Automatically version [auto-version-target](https://github.com/WilliamTheMarsman/auto-version-target) when an image with a particular version sees that image increase.
+Automatically version [auto-version-target](https://github.com/WilliamTheMarsman/auto-version-target) when an image version is updated.
 
 ## Usage
 
