@@ -176,7 +176,6 @@ def autoVersion(projectParentDir,projectDirName,projectGitURL,release,image,vers
   gitAdd.waitFor();
   println "... added changes to local repository on '${release}' branch ... "
 
-  gitAdd.waitFor();
   def gitCommit = ["git", "-C", projectDir, "commit", "-m", "📦 '${image}:${version}' (from '${oldVersion}')"].execute()
   gitCommit.waitFor();
   println "... committed changes to local repository on '${release}' branch ... "
