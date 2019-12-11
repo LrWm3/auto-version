@@ -1,42 +1,27 @@
-////
-// See 'autoVersion' for impl details
-////
-
-////
-// required permissions
-////
-// add below to 'Signatures already approved' on page 'http://localhost:8080/scriptApproval/'
-/*----------------------------------------------------------------------------------------------------------------------
-method java.io.File getPath
-method java.lang.Process exitValue
-method java.lang.Process waitFor
-new groovy.util.AntBuilder
-new java.io.File java.lang.String
-staticField groovy.io.FileType FILES
-staticMethod org.codehaus.groovy.runtime.DefaultGroovyMethods execute java.util.List
-staticMethod org.codehaus.groovy.runtime.DefaultGroovyMethods getText java.io.File
-staticMethod org.codehaus.groovy.runtime.DefaultGroovyMethods size java.util.regex.Matcher
-staticMethod org.codehaus.groovy.runtime.DefaultGroovyMethods traverse java.io.File java.util.Map groovy.lang.Closure
-----------------------------------------------------------------------------------------------------------------------*/
-
 // Imports
 import groovy.io.FileType
 import groovy.io.FileVisitResult
 
-// Pipeline is one line which calls the function below
 node {
-  stage('Auto-Release') {
-    def scmvars=steps.checkout(scm)
-    if (scmvars.GIT_AUTHOR_NAME && scmvars.GIT_AUTHOR_EMAIL) {
-      steps.sh(script:"""
-        git config --global user.name '${scmvars.GIT_AUTHOR_NAME}'
-        git config --global user.email '${scmvars.GIT_AUTHOR_EMAIL}'
-        """)
-    }
+   stage('Preparation') { // for display purposes
+        def projectParentDir=".."
+        def projectDirName="auto-version-target"
+        def projectDir="${projectParentDir}/${projectDirName}"
+        def projectGitURL="https://github.com/WilliamTheMarsman/auto-version-target.git"
+        def credentialsId='316ac40d-22d3-46c7-b138-cde567899405'
 
-    autoVersion(RELEASE_BRANCH, IMAGE_NAME, IMAGE_VERSION)
-  }
+        // Get some code from a GitHub repository
+        withCredentials([usernamePassword(credentialsId: "${credentialsId}", usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD')]){    
+            sh('''
+                git config --global credential.helper "!f() { echo username=\\$GIT_USERNAME; echo password=\\$GIT_PASSWORD; }; f"
+            ''')
+            autoVersion(projectParentDir,projectDirName, projectGitURL, RELEASE_BRANCH, IMAGE_NAME, IMAGE_VERSION)
+        }
+        
+   }
 }
+
+
 
 // Wrapper around main function, contains HC values
 @NonCPS
@@ -46,6 +31,40 @@ def autoVersion(release, image, version){
   def projectGitURL="https://github.com/WilliamTheMarsman/auto-version-target.git"
   
   return autoVersion(projectParentDir,projectDirName,projectGitURL,release,image,version)
+}
+
+// 
+// run git command
+//
+// command - an array of commands
+//
+// returns {exitValue, sout, serr}
+//
+@NonCPS
+def gitFunction(command) {
+  def gitCommand = (["git"] + command).execute()
+  def sout = new StringBuilder(), serr = new StringBuilder()
+  gitCommand.consumeProcessOutput(sout, serr)
+
+  gitCommand.waitFor()
+  println "$sout"
+  if (gitCommand.exitValue()) {
+    println "Error encountered: $serr"
+  }
+
+  return [exitValue: gitCommand.exitValue(), sout: sout, serr: serr]
+}
+
+// 
+// run git command against a specific project directory
+//
+// command - an array of commands
+//
+// returns {exitValue, sout, serr}
+//
+@NonCPS
+def gitFunction(projectDir, command) {
+  return gitFunction(["-C", projectDir] + command)
 }
 
 @NonCPS
@@ -77,47 +96,38 @@ def autoVersion(projectParentDir,projectDirName,projectGitURL,release,image,vers
   println THIN_DELIM
 
   // So far this will check out the project
-  def clone = ["git", "-C", "..", "clone", projectGitURL, projectDir].execute()
-  clone.waitFor();
+  gitFunction(["clone", projectGitURL, projectDir])
   println "... cloned '${projectGitURL}' to '${projectDir}' ..."
   
 
   // Fetch all branches
-  def fetch = ["git", "-C", projectDir, "fetch", release].execute()
-  fetch.waitFor();
+  gitFunction(projectDir, ["fetch", "origin"])
   println "... fetching all branches for '${projectDirName}' ..."
 
   // See if the branch exists remotely
   // see: https://git-scm.com/docs/ls-remote
-  def branchExists = ["git", "-C", projectDir, "ls-remote", "--heads", "--exit-code", "origin", release].execute()
+  def branchExists = gitFunction(projectDir, ["ls-remote", "--heads", "--exit-code", "origin", release])
   def sout = new StringBuilder(), serr = new StringBuilder()
-  branchExists.consumeProcessOutput(sout, serr)
-
-  branchExists.waitFor()
-  if (branchExists.exitValue()) {
+  
+  if (branchExists.exitValue) {
     println "Branch " + release + " does not exist, so group project requires no updates!"
-    println "sout: $sout"
-    println "serr: $serr"
     return OK_STATUS;
   }
+
   println "... found target release branch '${release}' ..."
 
   // Checkout the branch
-  def checkout = ["git", "-C", projectDir, "checkout", release].execute()
-  checkout.waitFor()
+  gitFunction(projectDir, ["checkout", release])
   println "... checked out release branch '${release}' ..."
 
   // Clean the branch
-  def checkoutReset = ["git", "-C", projectDir, "checkout", "--", "."].execute()
-  checkoutReset.waitFor()
+  gitFunction(projectDir, ["checkout", "--", "."])
 
-  def gitClean = ["git", "-C", projectDir, "clean", "-xfd", "."].execute()
-  gitClean.waitFor()
+  gitFunction(projectDir, ["clean", "-xfd", "."])
   println "... cleaned branch '${release}' ..."
 
   // Pull the latest for branch
-  def pullLatest = ["git", "-C", projectDir, "pull"].execute()
-  pullLatest.waitFor()
+  gitFunction(projectDir, ["pull", "origin", release])
   println "... pulled latest from release branch '${release}' ..."
 
   def projectRootPath = new File(projectDir)
@@ -206,17 +216,14 @@ def autoVersion(projectParentDir,projectDirName,projectGitURL,release,image,vers
   println THIN_DELIM
 
   // Commit the change 
-  def gitAdd = ["git", "-C", projectDir, "add", "."].execute()
-  gitAdd.waitFor();
+  gitFunction(projectDir, ["add", "."])
   println "... added changes to local repository on '${release}' branch ... "
 
-  def gitCommit = ["git", "-C", projectDir, "commit", "-m", "📦 '${image}:${version}' (from '${oldVersion}')"].execute()
-  gitCommit.waitFor();
+  gitFunction(projectDir, ["commit", "-m", "📦 '${image}:${version}' (from '${oldVersion}')"])
   println "... committed changes to local repository on '${release}' branch ... "
 
   // Push to remote
-  def gitPush = ["git", "-C", projectDir, "push", "origin", release].execute()
-  gitPush.waitFor();
+  gitFunction(projectDir, ["push", "origin", release])
   println "... pushed changes to remote repository on '${release}' branch ... "
 
   println THIN_DELIM

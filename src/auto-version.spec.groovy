@@ -24,6 +24,8 @@ def imageNotExist="i-dont-exist"
 // Call the parameterized method
 autoVersion.autoVersion(release,imageNotExist,version);
 
+checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: "../${projectDirName}"]], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'myId', url: projectGitURL]]])
+
 // Release, file and version we're updating for
 // Hardcoded as an example here
 version="0.1.0-rc5"
